@@ -1,4 +1,23 @@
-/* 下载学在浙大课件 */
+/* 维护学在浙大课件，你需要准备一个`.cache.json`文件，初始为
+{
+  "root": "D:/path/to/the/courseware/folder",
+  "xid": "81029",// 课程ID
+  "cache": []
+}
+
+使用时将该文件路径作为参数传入
+*/
+
+const cacheFile = process.argv.find((v) => v.endsWith(".cache.json"));
+
+if (!cacheFile) {
+  console.error("Please provide a cache file path as an argument.");  
+  process.exit(1);
+}
+
+const data = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
+
+
 
 import inquirer from "inquirer";
 import { COURSES, ZJUAM } from "../login-ZJU.js";
@@ -27,17 +46,17 @@ const downloadFiles = (list) => {
       hideCursor: true,
       format: "{filename} | {bar} | {value}/{total}",
     },
-    cliProgress.Presets.shades_grey
+    cliProgress.Presets.rect
   );
   const download = async (fileinfo) => {
-    console.log(fileinfo,"https://courses.zju.edu.cn/api/uploads/"+fileinfo.id+"/blob");
+    // console.log(fileinfo,"https://courses.zju.edu.cn/api/uploads/"+fileinfo.id+"/blob");
     
     const response = await courses.fetch("https://courses.zju.edu.cn/api/uploads/"+fileinfo.id+"/blob");
 
     if (!response.ok) {
       throw new Error(`下载失败: ${response.statusText}`);
     }
-    const writer = fs.createWriteStream(fileinfo.name);
+    const writer = fs.createWriteStream(path.join(data.root,fileinfo.name));
 
     const bar = multibar.create(fileinfo.size, 0, { filename:fileinfo.name });
 
@@ -68,80 +87,41 @@ const downloadFiles = (list) => {
       writer.on("finish", resolve).on("error", reject);
     });
   };
-  list.forEach((file) => {
-    const filename = file.name.replace(/[\\/:*?"<>|]/g, "_");
-    // multibar.create(file.size, 0, { filename });
-    download(file).then(()=>{
-      // fs.appendFileSync(path.resolve(process.cwd(), ".learninginzju-materials"), file.id + "\n")
+  Promise.all(
+    list.map((file) => {
+      return new Promise((resolve, reject) => {
+        download(file)
+          .then(() => {
+            multibar.update(file.size, { filename: file.name });
+            resolve();
+          })
+          .catch((err) => {
+            console.error(`下载失败: ${err.message}`);
+            reject(err);
+          });
+      });
     })
-  });
+  )
+    .then(() => {
+      multibar.stop();
+      console.log(`[+] 下载完成`);
+      data.cache.push(...list);
+      fs.writeFileSync(cacheFile, JSON.stringify(data, null, 2));
+    })
+    .catch((err) => {
+      console.error(`[x] 下载失败: ${err.message}`);
+    });
+
+
 
 
 };
 
 (async () => {
-  courses
-    .fetch(
-      "https://courses.zju.edu.cn/api/my-semesters?fields=id,name,sort,is_active,code"
-    )
-    .then((v) => v.json())
-    .then(({ semesters }) => {
-      return semesters.filter((semester) => semester.is_active);
-    })
-    .then(async (semesters) => {
-      // console.log(semesters);
-      const coursesFetchParam = new URLSearchParams();
-      coursesFetchParam.set("page", "1");
-      coursesFetchParam.set("page_size", "1000");
-      coursesFetchParam.set("sort", "all");
-      coursesFetchParam.set("normal", '{"version":7,"apiVersion":"1.1.0"}');
-      coursesFetchParam.set(
-        "conditions",
-        JSON.stringify({
-          role: [],
-          semester_id: semesters.map((v) => v.id),
-          academic_year_id: [],
-          status: ["ongoing", "notStarted"],
-          course_type: [],
-          effectiveness: [],
-          published: [],
-          display_studio_list: false,
-        })
-      );
-      coursesFetchParam.set(
-        "fields",
-        "id,org_id,name,second_name,department(id,name),instructors(name),grade(name),klass(name),cover,learning_mode,course_attributes(teaching_class_name,data),public_scope,course_type,course_code,compulsory,credit,second_name"
-      );
-
-      //   console.log(coursesFetchParam.toString(),decodeURIComponent(coursesFetchParam.toString()));
-
-      return courses
-        .fetch(
-          "https://courses.zju.edu.cn/api/my-courses?" +
-            coursesFetchParam.toString()
-        )
-        .then((v) => v.json());
-    })
-    .then(({ courses }) => {
-      return inquirer.prompt({
-        type: "list",
-        name: "course",
-        message: "Choose the course :",
-        loop: true,
-        choices: courses.map((course) => ({
-          name: course.name,
-          value: course,
-        })),
-      });
-    })
-    .then(async ({ course }) => {
-      // console.log(course);
-
-      return courses
-        .fetch(`https://courses.zju.edu.cn/api/courses/${course.id}/activities`)
-        .then((v) => v.json());
-    })
-    .then(({ activities }) => {
+  courses.
+    fetch(`https://courses.zju.edu.cn/api/courses/${data.xid}/activities`)
+        .then((v) => v.json())
+        .then(({ activities }) => {
       const materialList = activities.filter(
         (activity) => activity.type === "material"
       );
@@ -158,7 +138,10 @@ const downloadFiles = (list) => {
         });
       });
       return realMaterialList
-      // .filter(v=>!(fs.readFileSync(path.resolve(process.cwd(), ".learninginzju-materials")).toString().split("\n").includes(v.id)))
+      .filter(
+        (material) =>
+          data.cache.findIndex((v) => v.id === material.id) === -1
+      )
     })
     .then((materialList) => {
       return inquirer

@@ -1,3 +1,5 @@
+/* 获取学在浙大quiz的答案 */
+
 import * as inquirer from "@inquirer/prompts";
 import { COURSES, ZJUAM } from "../login-ZJU.js";
 

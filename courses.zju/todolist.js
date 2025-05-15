@@ -1,3 +1,5 @@
+/* 获取学在浙大todo list */
+
 import inquirer from "inquirer";
 import { COURSES, ZJUAM } from "../login-ZJU.js";
 

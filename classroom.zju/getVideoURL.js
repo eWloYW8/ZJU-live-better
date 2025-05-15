@@ -1,11 +1,13 @@
+const PotPlayerPath =
+  "D:\\Developing_Environment\\Programs\\PotPlayer\\PotPlayerMini64.exe";// Set to your path
+
+
 import inquirer from "inquirer";
 import { CLASSROOM, ZJUAM } from "../login-ZJU.js";
 
 import "dotenv/config";
 import { spawn } from "child_process";
 
-const PotPlayerPath =
-  "D:\\Developing_Environment\\Programs\\PotPlayer\\PotPlayerMini64.exe";
 
 const classroom = new CLASSROOM(
   new ZJUAM(process.env.ZJU_USERNAME, process.env.ZJU_PASSWORD)
