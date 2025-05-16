@@ -1,7 +1,11 @@
 /* 获取学在浙大quiz的答案 */
 
-import * as inquirer from "@inquirer/prompts";
+// 注意这里的quiz是【可以通过“互动”进入的那种】，不是能通过PC端进入的exam
+
+import inquirer from "inquirer";
 import { COURSES, ZJUAM } from "../login-ZJU.js";
+import * as fs from "fs";
+import * as path from "path";
 
 import "dotenv/config";
 
@@ -100,6 +104,59 @@ const courses = new COURSES(
                 console.log(`  - Answer: ${String.fromCharCode([65+(ans.sort)])}. ${ans.content}`);
             })
         })
+        return inquirer
+        .prompt({
+          type: "confirm",
+          name: "confirm",
+          message: "Generate an HTML file to better view answer?",
+          default: true,
+        })
+        .then((confirm) => {
+          if (confirm.confirm) {
+            // const { spawn } = require("child_process");
+            fs.writeFileSync(path.join(__dirname,"QA.html"),`
+            <!DOCTYPE html>
+            <html lang="zh-Hans">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Quiz Answer</title>
+                <style>
+                    body{
+                        font-family: sans-serif;
+                    }
+                    .question{
+                        font-size: 20px;
+                        font-weight: bold;
+                    }
+                    .choice{
+                        font-size: 16px;
+                        margin-left: 20px;
+                    }
+                    .answer{
+                        font-size: 20px;
+                        margin-left: 20px;
+                        font-weight: bold;
+                        color: blue;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Quiz Answer</h1>
+                ${oral.subjects_data.subjects.map(rv=>`
+                    <div class="question">Q#${rv.id} -: ${rv.description}</div>
+                    ${rv.options.map(rx=>`
+                        <div class="choice">Choice ${String.fromCharCode([65+(rx.sort)])}: ${rx.content}</div>
+                    `).join("")}
+                    ${rv.options.filter(rx=>rx.is_answer).map(ans=>`
+                        <div class="answer">Answer: ${String.fromCharCode([65+(ans.sort)])}. ${ans.content}</div>
+                    `).join("")}
+                `).join("")}
+            </body>
+            </html>
+            `
+          }
+        });
     })
     .catch(e=>{
       console.log("Exit innormaly with error: ",e);
