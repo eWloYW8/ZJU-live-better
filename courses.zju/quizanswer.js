@@ -154,8 +154,9 @@ const courses = new COURSES(
                 `).join("")}
             </body>
             </html>
-            `
-          }
+            `)
+            console.log("[+] HTML file generated at: ",path.join(__dirname,"QA.html"));
+                    }
         });
     })
     .catch(e=>{
