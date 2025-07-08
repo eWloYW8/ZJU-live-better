@@ -17,7 +17,8 @@ const RaderInfo = {
 //      如果失败了>3次，则会尝试三点定位法
 
 // 成功率：目前【雷达点名】+【已配置了雷达地点】的情况可以100%签到成功
-//         数字点名未测试，三点定位法未测试，欢迎向我反馈
+//        数字点名已测试，已成功，确定远程没有限速，没有calm down，但是目前单线程，可能会有点慢，
+//        三点定位法未测试，欢迎向我反馈
 
 // 顺便一提，经测试，rader_out_of_scope的限制是500米整
 
@@ -28,6 +29,8 @@ const courses = new COURSES(
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let req_num = 0;
+
+let we_are_bruteforcing = [];
 
 // if (false)
 (async () => {
@@ -91,6 +94,12 @@ let req_num = 0;
               answerRaderRollcall(RaderInfo[CONFIG.raderAt], rollcallId);
             }
             if (rollcall.is_number) {
+              if(we_are_bruteforcing.includes(rollcallId)){
+                console.log("[Auto Sign-in] We are already bruteforcing rollcall #" + rollcallId);
+                return;
+              }
+              we_are_bruteforcing.push(rollcallId);
+              console.log("[Auto Sign-in] Now bruteforcing rollcall #" + rollcall)
               batchNumberRollCall(rollcallId);
             }
           });
@@ -263,8 +272,21 @@ async function answerNumberRollcall(numberCode, rid) {
         },
       }
     )
-    .then((vd) => {
-      if (vd.status == 404) {
+    .then(async(vd) => {
+      // console.log(vd.status, vd.statusText);
+      // console.log(await vd.text());
+      /*
+      When fail:
+      400 BAD REQUEST
+      {"error_code":"wrong_number_code","message":"wrong number code","number_code":"6921"}
+      When success:
+      200 OK
+      {"id":5427153,"status":"on_call"}
+
+       */
+
+      
+      if (vd.status != 200) {
         return false;
       }
       return true;
