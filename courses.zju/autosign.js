@@ -84,11 +84,11 @@ let we_are_bruteforcing = [];
              */
             const rollcallId = rollcall.rollcall_id;
 
-            // if (rollcall.status == "on_call_fine" || rollcall.status == "on_call") {
-            //   console.log("[Auto Sign-in] Note that #" + rollcallId + " is on call.");
-            //   ;
-            //   return;
-            // }
+            if (rollcall.status == "on_call_fine" || rollcall.status == "on_call") {
+              console.log("[Auto Sign-in] Note that #" + rollcallId + " is on call.");
+              ;
+              return;
+            }
             console.log("[Auto Sign-in] Now answering rollcall #" + rollcallId);
             if (rollcall.is_radar) {
               answerRaderRollcall(RaderInfo[CONFIG.raderAt], rollcallId);
