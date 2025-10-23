@@ -297,23 +297,40 @@ let currentBatchingRCs = [];
 async function batchNumberRollCall(rid) {
   if (!currentBatchingRCs.includes(rid)) {
     currentBatchingRCs.push(rid);
-    for (let ckn = 0; ckn <= 9999; ckn++) {
-      if (ckn % 100 == 0) {
-        console.log(
-          "[Auto Sign-in] Cracking rollcall number [" +
-          ckn +
+
+    const allNumbers = Array.from({ length: 10000 }, (_, i) =>
+      i.toString(10).padStart(4, "0")
+    );
+
+    console.log("[Auto Sign-in] Starting async brute force for rollcall #" + rid);
+
+    const batchSize = 50;
+    for (let i = 0; i < allNumbers.length; i += batchSize) {
+      const batch = allNumbers.slice(i, i + batchSize);
+
+      console.log(
+        "[Auto Sign-in] Cracking rollcall number [" +
+          batch[0] +
           " ~ " +
-          (ckn + 99) +
+          batch[batch.length - 1] +
           "]"
-        );
-      }
-      if (await answerNumberRollcall(ckn.toString(10).padStart(4, "0"), rid)) {
-        console.log("[Auto Sign-in] Finished with rollcall number: ", ckn);
-        break;
-      }
+      );
+
+      // 并发执行，不中断
+      await Promise.all(
+        batch.map(async (num) => {
+          const success = await answerNumberRollcall(num, rid);
+          if (success) {
+            console.log("[Auto Sign-in] Finished with rollcall number: ", num);
+          }
+        })
+      );
     }
+
+    console.log("[Auto Sign-in] Finished async brute force for rollcall #" + rid);
   }
 }
+
 
 // answerRaderRollcall(RaderInfo[CONFIG.raderAt], 171632);
 
