@@ -3,14 +3,22 @@ import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
 
 const CONFIG = {
-  raderAt: "t1",
+  raderAt: "ZJGD1",
   coldDownTime: 4000, // 4s
 };
 const RaderInfo = {
   ZJGD1: [120.089136, 30.302331], //东一教学楼
   ZJGX1: [120.085042, 30.30173], //西教学楼
   ZJGB1: [120.077135, 30.305142], //段永平教学楼
-  t1: [120.077135, 30.309642], 
+  YQ4: [120.122176,30.261555], //玉泉教四
+  YQ1: [120.123853,30.262544], //玉泉教一
+  YQ7: [120.120344,30.263907], //玉泉教七
+  ZJ1: [120.126008,30.192908], //之江校区1
+  HJC1: [120.195939,30.272068], //华家池校区1
+  HJC2: [120.198193,30.270419], //华家池校区2
+  ZJ2: [120.124267,30.19139], //之江校区2 // 之江校区半径都没500米
+  YQSS: [120.124001,30.265735], //虽然大概不会有课在宿舍上但还是放一个点位
+  ZJG4: [120.073427,30.299757], //紫金港大西区
 };
 // 说明: 在这里配置签到地点后，签到会优先【使用配置的地点】尝试
 //      随后会尝试遍历RaderInfo中的所有地点
@@ -18,9 +26,10 @@ const RaderInfo = {
 
 // 成功率：目前【雷达点名】+【已配置了雷达地点】的情况可以100%签到成功
 //        数字点名已测试，已成功，确定远程没有限速，没有calm down，但是目前单线程，可能会有点慢，
-//        三点定位法未测试，欢迎向我反馈
+//        三点定位法还没写
 
 // 顺便一提，经测试，rader_out_of_scope的限制是500米整
+
 
 const courses = new COURSES(
   new ZJUAM(process.env.ZJU_USERNAME, process.env.ZJU_PASSWORD)
@@ -37,7 +46,16 @@ let we_are_bruteforcing = [];
   while (true) {
     await courses
       .fetch("https://courses.zju.edu.cn/api/radar/rollcalls")
-      .then((v) => v.json())
+      .then((v) => v.text())
+      .then(async (fa) => {
+        try {
+          return await JSON.parse(fa)
+        } catch (e) {
+          console.log("[-][Auto Sign-in] Oh no..", e);
+          console.log(fa);
+        }
+      })
+  //     .then((v) => v.json())
       .then(async (v) => {
         if (v.rollcalls.length == 0) {
           console.log(`[Auto Sign-in](Req #${++req_num}) No rollcalls found.`);
@@ -83,8 +101,8 @@ let we_are_bruteforcing = [];
   }
              */
             const rollcallId = rollcall.rollcall_id;
-
-            if (rollcall.status == "on_call_fine" || rollcall.status == "on_call") {
+            console.log(rollcall);
+            if (rollcall.status == "on_call_fine" || rollcall.status == "on_call" || rollcall.status_name == "on_call_fine" || rollcall.status_name == "on_call") {
               console.log("[Auto Sign-in] Note that #" + rollcallId + " is on call.");
               ;
               return;
@@ -104,6 +122,11 @@ let we_are_bruteforcing = [];
             }
           });
         }
+      }).catch((e) => {
+        console.log(
+          `[Auto Sign-in](Req #${++req_num}) Failed to fetch rollcalls: `,
+          e
+        );
       });
 
     await sleep(CONFIG.coldDownTime);
@@ -286,7 +309,7 @@ async function answerNumberRollcall(numberCode, rid) {
        */
 
       
-      if (vd.status != 200) {
+      if (vd.status != 200 || vd.error_code?.includes("wrong")) {
         return false;
       }
       return true;
