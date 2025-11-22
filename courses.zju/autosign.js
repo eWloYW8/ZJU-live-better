@@ -318,25 +318,42 @@ async function answerNumberRollcall(numberCode, rid) {
 
 let currentBatchingRCs = [];
 async function batchNumberRollCall(rid) {
-  if (!currentBatchingRCs.includes(rid)) {
-    currentBatchingRCs.push(rid);
-    for (let ckn = 0; ckn <= 9999; ckn++) {
-      if (ckn % 100 == 0) {
-        console.log(
-          "[Auto Sign-in] Cracking rollcall number [" +
-          ckn +
-          " ~ " +
-          (ckn + 99) +
-          "]"
-        );
-      }
-      if (await answerNumberRollcall(ckn.toString(10).padStart(4, "0"), rid)) {
-        console.log("[Auto Sign-in] Finished with rollcall number: ", ckn);
-        break;
-      }
+  if (currentBatchingRCs.includes(rid)) return;
+
+  currentBatchingRCs.push(rid);
+
+  const batchSize = 200;
+  let found = null;
+
+  for (let start = 0; start <= 9999; start += batchSize) {
+    const end = Math.min(start + batchSize - 1, 9999);
+
+    console.log(`[Auto Sign-in] Cracking rollcall number batch: [${start} ~ ${end}]`);
+
+    const tasks = [];
+
+    for (let ckn = start; ckn <= end; ckn++) {
+      const code = ckn.toString().padStart(4, "0");
+
+      tasks.push(
+        answerNumberRollcall(code, rid).then(success => {
+          if (success && !found) found = code;
+          return success;
+        })
+      );
     }
+    await Promise.all(tasks);
+
+    console.log(`[Auto Sign-in] Batch [${start} ~ ${end}] completed.`);
+  }
+
+  if (found) {
+    console.log("[Auto Sign-in] At least one successful rollcall number found:", found);
+  } else {
+    console.log("[Auto Sign-in] No valid rollcall number found in 0-9999.");
   }
 }
+
 
 // answerRaderRollcall(RaderInfo[CONFIG.raderAt], 171632);
 
