@@ -1,7 +1,7 @@
 /* 获取学在浙大todo list */
 
 import inquirer from "inquirer";
-import { COURSES, ZJUAM } from "../login-ZJU.js";
+import { COURSES, ZJUAM } from "login-zju";
 
 import "dotenv/config";
 

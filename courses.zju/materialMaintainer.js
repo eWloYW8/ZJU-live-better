@@ -20,7 +20,7 @@ const data = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
 
 
 import inquirer from "inquirer";
-import { COURSES, ZJUAM } from "../login-ZJU.js";
+import { COURSES, ZJUAM } from "login-zju";
 import cliProgress from "cli-progress";
 import fs from "fs";
 import path from "path";

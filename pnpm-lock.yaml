@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@inquirer/prompts':
-        specifier: ^7.10.1
-        version: 7.10.1
       axios:
         specifier: ^1.13.2
         version: 1.13.2
@@ -32,6 +29,9 @@ importers:
       inquirer:
         specifier: ^12.11.1
         version: 12.11.1
+      login-zju:
+        specifier: ^1.0.5
+        version: 1.0.5
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -373,8 +373,8 @@ packages:
       debug:
         optional: true
 
-  form-data@4.0.4:
-    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
+  form-data@4.0.5:
+    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
     engines: {node: '>= 6'}
 
   forwarded@0.2.0:
@@ -450,6 +450,9 @@ packages:
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
     engines: {node: '>=8'}
+
+  login-zju@1.0.5:
+    resolution: {integrity: sha512-+sBkhl72dH9JtdSE6HHjT39bFqzjggCQu+UThMmr+KQKyLeLd5seiROMaSp1f75wRM5nks6vOd4iCcVmiNaWGw==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -759,7 +762,7 @@ snapshots:
   axios@1.13.2:
     dependencies:
       follow-redirects: 1.15.11
-      form-data: 4.0.4
+      form-data: 4.0.5
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -980,7 +983,7 @@ snapshots:
 
   follow-redirects@1.15.11: {}
 
-  form-data@4.0.4:
+  form-data@4.0.5:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
@@ -1066,6 +1069,8 @@ snapshots:
   ipaddr.js@1.9.1: {}
 
   is-fullwidth-code-point@3.0.0: {}
+
+  login-zju@1.0.5: {}
 
   math-intrinsics@1.1.0: {}
 

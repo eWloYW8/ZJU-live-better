@@ -3,7 +3,7 @@ const PotPlayerPath =
 
 
 import inquirer from "inquirer";
-import { CLASSROOM, ZJUAM } from "../login-ZJU.js";
+import { CLASSROOM, ZJUAM } from "login-zju";
 
 import "dotenv/config";
 import { spawn } from "child_process";

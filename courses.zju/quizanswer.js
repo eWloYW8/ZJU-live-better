@@ -3,7 +3,7 @@
 // 注意这里的quiz是【可以通过“互动”进入的那种】，不是能通过PC端进入的exam
 
 import inquirer from "inquirer";
-import { COURSES, ZJUAM } from "../login-ZJU.js";
+import { COURSES, ZJUAM } from "login-zju";
 import * as fs from "fs";
 import * as path from "path";
 

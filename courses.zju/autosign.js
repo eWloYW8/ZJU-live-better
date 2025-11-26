@@ -1,4 +1,4 @@
-import { COURSES, ZJUAM } from "../login-ZJU.js";
+import { COURSES, ZJUAM } from "login-zju";
 import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
 
@@ -101,7 +101,7 @@ let we_are_bruteforcing = [];
   }
              */
             const rollcallId = rollcall.rollcall_id;
-            console.log(rollcall);
+            // console.log(rollcall);
             if (rollcall.status == "on_call_fine" || rollcall.status == "on_call" || rollcall.status_name == "on_call_fine" || rollcall.status_name == "on_call") {
               console.log("[Auto Sign-in] Note that #" + rollcallId + " is on call.");
               ;
