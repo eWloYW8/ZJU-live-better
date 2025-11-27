@@ -322,14 +322,17 @@ async function batchNumberRollCall(rid) {
 
   currentBatchingRCs.push(rid);
 
+  const state = new Map();
+  state.set("found", false);
+
   const batchSize = 200;
-  let found = null;
+  let foundCode = null;
 
   for (let start = 0; start <= 9999; start += batchSize) {
+
+    if (state.get("found")) break;
+
     const end = Math.min(start + batchSize - 1, 9999);
-
-    console.log(`[Auto Sign-in] Cracking rollcall number batch: [${start} ~ ${end}]`);
-
     const tasks = [];
 
     for (let ckn = start; ckn <= end; ckn++) {
@@ -337,21 +340,35 @@ async function batchNumberRollCall(rid) {
 
       tasks.push(
         answerNumberRollcall(code, rid).then(success => {
-          if (success && !found) found = code;
-          return success;
+          if (state.get("found")) return;
+
+          if (success) {
+            foundCode = code;
+            state.set("found", true);
+          }
         })
       );
     }
-    await Promise.all(tasks);
 
-    console.log(`[Auto Sign-in] Batch [${start} ~ ${end}] completed.`);
+    await Promise.race([
+      Promise.all(tasks),
+      new Promise(resolve => {
+        const timer = setInterval(() => {
+          if (state.get("found")) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 20);
+      })
+    ]);
+
+    if (state.get("found")) break;
   }
 
-  if (found) {
-    console.log("[Auto Sign-in] At least one successful rollcall number found:", found);
-  } else {
-    console.log("[Auto Sign-in] No valid rollcall number found in 0-9999.");
-  }
+  if (foundCode)
+    console.log("SUCCESS:", foundCode);
+  else
+    console.log("Failed to find valid code.");
 }
 
 
