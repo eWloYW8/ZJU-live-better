@@ -63,8 +63,10 @@ async function dingTalk(msg) {
       body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      console.error(`[DingTalk] Failed: ${response.statusText}`);
+    const responseData = await response.json();
+
+    if (responseData.errcode) {
+      console.error(`[DingTalk] Failed: ${responseData.errmsg}`);
     }
   } catch (e) {
     console.error("[DingTalk] Error sending message:", e);
