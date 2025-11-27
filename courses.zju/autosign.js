@@ -2,12 +2,11 @@ import { COURSES, ZJUAM } from "login-zju";
 import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
 import crypto from "crypto";
+import dingTalk from "../shared/dingtalk-webhook.js";
 
 const CONFIG = {
   raderAt: "ZJGD1",
   coldDownTime: 4000, // 4s
-  DINGTALK_WEBHOOK: process.env.DINGTALK_WEBHOOK || "",
-  DINGTALK_SECRET: process.env.DINGTALK_SECRET || "",
 };
 const RaderInfo = {
   ZJGD1: [120.089136, 30.302331], //东一教学楼
@@ -33,43 +32,7 @@ const RaderInfo = {
 
 // 顺便一提，经测试，rader_out_of_scope的限制是500米整
 
-async function dingTalk(msg) {
-  if (!CONFIG.DINGTALK_WEBHOOK) {
-    return;
-  }
 
-  let url = CONFIG.DINGTALK_WEBHOOK;
-
-  if (CONFIG.DINGTALK_SECRET) {
-    const timestamp = Date.now();
-    const stringToSign = `${timestamp}\n${CONFIG.DINGTALK_SECRET}`;
-    const sign = crypto
-      .createHmac("sha256", CONFIG.DINGTALK_SECRET)
-      .update(stringToSign)
-      .digest("base64");
-    const signEncoded = encodeURIComponent(sign);
-    url = `${url}&timestamp=${timestamp}&sign=${signEncoded}`;
-  }
-
-  const body = {
-    msgtype: "text",
-    text: { content: msg },
-  };
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      console.error(`[DingTalk] Failed: ${response.statusText}`);
-    }
-  } catch (e) {
-    console.error("[DingTalk] Error sending message:", e);
-  }
-}
 
 
 const courses = new COURSES(
