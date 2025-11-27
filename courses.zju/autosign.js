@@ -32,14 +32,17 @@ const RaderInfo = {
 
 // 顺便一提，经测试，rader_out_of_scope的限制是500米整
 
-
+const sendBoth=(msg)=>{
+  console.log(msg);
+  dingTalk(msg);
+}
 
 
 const courses = new COURSES(
   new ZJUAM(process.env.ZJU_USERNAME, process.env.ZJU_PASSWORD)
 );
 
-dingTalk("[Auto Sign-in] Logined in as " + process.env.ZJU_USERNAME);
+dingTalk("[Auto Sign-in] Logged in as " + process.env.ZJU_USERNAME);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -57,8 +60,7 @@ let we_are_bruteforcing = [];
         try {
           return await JSON.parse(fa)
         } catch (e) {
-          console.log("[-][Auto Sign-in] Oh no..", e);
-          console.log(fa);
+          sendBoth("[-][Auto Sign-in] Something went wrong: " + fa+"\nError: "+e.toString());
         }
       })
   //     .then((v) => v.json())
@@ -115,7 +117,7 @@ let we_are_bruteforcing = [];
             }
             console.log("[Auto Sign-in] Now answering rollcall #" + rollcallId);
             if (rollcall.is_radar) {
-              dingTalk(`[Auto Sign-in] Answering new radar rollcall #${rollcallId}: ${rollcall.title} @ ${rollcall.course_title} by ${rollcall.created_by_name} (${rollcall.department_name})`);
+              sendBoth(`[Auto Sign-in] Answering new radar rollcall #${rollcallId}: ${rollcall.title} @ ${rollcall.course_title} by ${rollcall.created_by_name} (${rollcall.department_name})`);
               answerRaderRollcall(RaderInfo[CONFIG.raderAt], rollcallId);
             }
             if (rollcall.is_number) {
@@ -124,8 +126,7 @@ let we_are_bruteforcing = [];
                 return;
               }
               we_are_bruteforcing.push(rollcallId);
-              dingTalk(`[Auto Sign-in] Bruteforcing new number rollcall #${rollcallId}: ${rollcall.title} @ ${rollcall.course_title} by ${rollcall.created_by_name} (${rollcall.department_name})`);
-              console.log("[Auto Sign-in] Now bruteforcing rollcall #" + rollcall)
+              sendBoth(`[Auto Sign-in] Bruteforcing new number rollcall #${rollcallId}: ${rollcall.title} @ ${rollcall.course_title} by ${rollcall.created_by_name} (${rollcall.department_name})`);
               batchNumberRollCall(rollcallId);
             }
           });
@@ -181,7 +182,7 @@ async function answerRaderRollcall(raderXY, rid) {
   if (RaderXY) {
     const outcome = await _req(RaderXY[0], RaderXY[1]);
     if (outcome.status_name == "on_call_fine") {
-      console.log(
+      sendBoth(
         "[Auto Sign-in] Trying configured Rader location: " +
         CONFIG.raderAt +
         " with outcome: ",
@@ -203,11 +204,11 @@ async function answerRaderRollcall(raderXY, rid) {
   for (const [key, value] of Object.entries(RaderInfo)) {
     // if (key == CONFIG.raderAt) continue; // Skip the configured Rader location
     console.log("[Auto Sign-in] Trying Rader location: " + key);
-    console.log(value[0],value[1]);
+    // console.log(value[0],value[1]);
     
     const outcome = await _req(value[0], value[1]);
     if (outcome.status_name == "on_call_fine") {
-      console.log(
+      sendBoth(
         "[Auto Sign-in] Congradulations! You are on the call at Rader location: " +
         key
       );
@@ -256,14 +257,14 @@ async function answerRaderRollcall(raderXY, rid) {
         const outcome = JSON.parse(fa);
         if (outcome.status_name == "on_call_fine") {
           console.log("[Auto Sign-in] Congradulations! You are on the call.");
-          dingTalk(`[Auto Sign-in] Rader Rollcall ${rollcallId} succeeded: on call fine.`);
+          // dingTalk(`[Auto Sign-in] Rader Rollcall ${rollcallId} succeeded: on call fine.`);
         }
       } catch (e) {
         console.log(
           "[Auto Sign-in] Rader Rollcall resulted with unknown outcome: ",
           fa
         );
-        dingTalk(`[Auto Sign-in] Rader Rollcall ${rollcallId} resulted with unknown outcome: ${fa}`);
+        sendBoth(`[Auto Sign-in] Rader Rollcall ${rollcallId} resulted with unknown outcome: ${fa}`);
       }
 
       /*It should be:
@@ -376,12 +377,10 @@ async function batchNumberRollCall(rid) {
   }
 
   if (foundCode) {
-    console.log("SUCCESS:", foundCode);
-    dingTalk(`[Auto Sign-in] Number Rollcall ${rid} succeeded: found code ${foundCode}.`);
+    sendBoth(`[Auto Sign-in] Number Rollcall ${rid} succeeded: found code ${foundCode}.`);
   }
   else {
-    console.log("Failed to find valid code.");
-    dingTalk(`[Auto Sign-in] Number Rollcall ${rid} failed to find valid code.`);
+    sendBoth(`[Auto Sign-in] Number Rollcall ${rid} failed to find valid code.`);
   }
 }
 
