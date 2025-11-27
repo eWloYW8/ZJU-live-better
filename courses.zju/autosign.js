@@ -1,10 +1,13 @@
 import { COURSES, ZJUAM } from "login-zju";
 import { v4 as uuidv4 } from "uuid";
 import "dotenv/config";
+import crypto from "crypto";
 
 const CONFIG = {
   raderAt: "ZJGD1",
   coldDownTime: 4000, // 4s
+  DINGTALK_WEBHOOK: process.env.DINGTALK_WEBHOOK || "",
+  DINGTALK_SECRET: process.env.DINGTALK_SECRET || "",
 };
 const RaderInfo = {
   ZJGD1: [120.089136, 30.302331], //东一教学楼
@@ -30,10 +33,50 @@ const RaderInfo = {
 
 // 顺便一提，经测试，rader_out_of_scope的限制是500米整
 
+async function dingTalk(msg) {
+  if (!CONFIG.DINGTALK_WEBHOOK) {
+    return;
+  }
+
+  let url = CONFIG.DINGTALK_WEBHOOK;
+
+  if (CONFIG.DINGTALK_SECRET) {
+    const timestamp = Date.now();
+    const stringToSign = `${timestamp}\n${CONFIG.DINGTALK_SECRET}`;
+    const sign = crypto
+      .createHmac("sha256", CONFIG.DINGTALK_SECRET)
+      .update(stringToSign)
+      .digest("base64");
+    const signEncoded = encodeURIComponent(sign);
+    url = `${url}&timestamp=${timestamp}&sign=${signEncoded}`;
+  }
+
+  const body = {
+    msgtype: "text",
+    text: { content: msg },
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      console.error(`[DingTalk] Failed: ${response.statusText}`);
+    }
+  } catch (e) {
+    console.error("[DingTalk] Error sending message:", e);
+  }
+}
+
 
 const courses = new COURSES(
   new ZJUAM(process.env.ZJU_USERNAME, process.env.ZJU_PASSWORD)
 );
+
+dingTalk("[Auto Sign-in] Logined in as " + process.env.ZJU_USERNAME);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -109,6 +152,7 @@ let we_are_bruteforcing = [];
             }
             console.log("[Auto Sign-in] Now answering rollcall #" + rollcallId);
             if (rollcall.is_radar) {
+              dingTalk(`[Auto Sign-in] Answering new radar rollcall #${rollcallId}: ${rollcall.title} @ ${rollcall.course_title} by ${rollcall.created_by_name} (${rollcall.department_name})`);
               answerRaderRollcall(RaderInfo[CONFIG.raderAt], rollcallId);
             }
             if (rollcall.is_number) {
@@ -117,6 +161,7 @@ let we_are_bruteforcing = [];
                 return;
               }
               we_are_bruteforcing.push(rollcallId);
+              dingTalk(`[Auto Sign-in] Bruteforcing new number rollcall #${rollcallId}: ${rollcall.title} @ ${rollcall.course_title} by ${rollcall.created_by_name} (${rollcall.department_name})`);
               console.log("[Auto Sign-in] Now bruteforcing rollcall #" + rollcall)
               batchNumberRollCall(rollcallId);
             }
@@ -248,12 +293,14 @@ async function answerRaderRollcall(raderXY, rid) {
         const outcome = JSON.parse(fa);
         if (outcome.status_name == "on_call_fine") {
           console.log("[Auto Sign-in] Congradulations! You are on the call.");
+          dingTalk(`[Auto Sign-in] Rader Rollcall ${rollcallId} succeeded: on call fine.`);
         }
       } catch (e) {
         console.log(
           "[Auto Sign-in] Rader Rollcall resulted with unknown outcome: ",
           fa
         );
+        dingTalk(`[Auto Sign-in] Rader Rollcall ${rollcallId} resulted with unknown outcome: ${fa}`);
       }
 
       /*It should be:
@@ -365,10 +412,14 @@ async function batchNumberRollCall(rid) {
     if (state.get("found")) break;
   }
 
-  if (foundCode)
+  if (foundCode) {
     console.log("SUCCESS:", foundCode);
-  else
+    dingTalk(`[Auto Sign-in] Number Rollcall ${rid} succeeded: found code ${foundCode}.`);
+  }
+  else {
     console.log("Failed to find valid code.");
+    dingTalk(`[Auto Sign-in] Number Rollcall ${rid} failed to find valid code.`);
+  }
 }
 
 
