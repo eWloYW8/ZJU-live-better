@@ -105,6 +105,7 @@ async function ChooseVideo(choices) {
   } catch (e) {
     console.error("Export failed:", e);
   }
+  ChooseVideo(choices);
 
 }
 
