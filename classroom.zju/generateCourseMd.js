@@ -221,45 +221,31 @@ class CourseExporter {
   }
 
   async generateMarkdown() {
-    this.pptData.sort((a, b) => a.created_sec - b.created_sec);
-    this.subtitleData.sort((a, b) => a.BeginSec - b.BeginSec);
 
     await fsPromises.mkdir(this.outputDir, { recursive: true });
 
-    const mdLines = [];
+    const mdlines = [];
     let subtitleIndex = 0;
 
     for (let i = 0; i < this.pptData.length; i++) {
       const ppt = this.pptData[i];
       const filename = `ppt_${(i + 1).toString().padStart(3, "0")}.png`;
       const ok = await this.downloadImage(ppt.pptimgurl, filename);
-      if (ok) {
-        mdLines.push(`![](./${filename})`, "");
-      }
-
-      const currentTime = ppt.created_sec;
-      const nextTime =
-        i + 1 < this.pptData.length ? this.pptData[i + 1].created_sec : Number.POSITIVE_INFINITY;
-
-      while (
-        subtitleIndex < this.subtitleData.length &&
-        this.subtitleData[subtitleIndex].BeginSec < nextTime
-      ) {
-        const sub = this.subtitleData[subtitleIndex];
-        mdLines.push(`${this.formatTime(sub.BeginSec)}${sub.Text}`);
-        subtitleIndex++;
-      }
-      mdLines.push("");
+      mdlines.push({line:`- ![](${filename})`,time:ppt.created_sec});
     }
-
-    while (subtitleIndex < this.subtitleData.length) {
-      const sub = this.subtitleData[subtitleIndex++];
-      mdLines.push(`${this.formatTime(sub.BeginSec)}${sub.Text}`);
+    for (const item of this.subtitleData) {
+      mdlines.push({line:`${this.formatTime(item.BeginSec)}${item.Text}`,time:item.BeginSec});
     }
+    // console.log(mdlines.sort((a,b)=>a.time-b.time));
+    
+    const mdContent = mdlines
+      .sort((a, b) => a.time - b.time)
+      .map((v) => v.line)
+      .join("\n");
 
     const mdPath = path.join(this.outputDir, "course_content.md");
-    await fsPromises.writeFile(mdPath, mdLines.join("\n"), "utf8");
-    console.log(`Markdown written to ${mdPath}`);
+    await fsPromises.writeFile(mdPath, mdContent, "utf-8");
+    console.log(`Markdown file generated at ${mdPath}`);
   }
 
   async export() {
