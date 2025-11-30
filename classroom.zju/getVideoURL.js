@@ -1,11 +1,22 @@
-const PotPlayerPath =
-  "D:\\Developing_Environment\\Programs\\PotPlayer\\PotPlayerMini64.exe";// Set to your path
+/*
+获取智云课堂课程视频链接并用你喜欢的播放器打开。
+
+使用前在.env文件中追加：
+```
+VIDEO_OPENER=your video player path
+```
+示例：
+```
+VIDEO_OPENER="D:\\Developing_Environment\\Programs\\PotPlayer\\PotPlayerMini64.exe"
+```
+*/
 
 
 import inquirer from "inquirer";
 import { CLASSROOM, ZJUAM } from "login-zju";
 
 import "dotenv/config";
+let opener = process.env.VIDEO_OPENER??false;
 import { spawn } from "child_process";
 
 
@@ -100,13 +111,21 @@ async function ChooseVideo(choices) {
         .prompt({
           type: "confirm",
           name: "confirm",
-          message: "Send the video URL to PotPlayer?",
+          message: "Send the video URL to your video player?",
           default: true,
         })
-        .then((confirm) => {
+        .then(async(confirm) => {
           if (confirm.confirm) {
             // const { spawn } = require("child_process");
-            const potplayer = spawn(PotPlayerPath, [url]);
+            if(!opener){
+              console.log("VIDEO_OPENER is not set in .env file!");
+              opener = await inquirer.prompt({
+                type: "input",
+                name: "path",
+                message: "Please input the path of your video player:",
+              }).then(ans=>ans.path);
+            }
+            const potplayer = spawn(opener, [url]);
             potplayer.on("close", (code) => {
               console.log(`child process exited with code ${code}`);
               ChooseVideo(choices);
