@@ -10,8 +10,6 @@ import { fileURLToPath } from "url";
 
 import "dotenv/config";
 
-const __filename = typeof __filename !== "undefined" ? __filename : fileURLToPath(import.meta.url);
-const __dirname = typeof __dirname !== "undefined" ? __dirname : path.dirname(__filename);
 
 const courses = new COURSES(
   new ZJUAM(process.env.ZJU_USERNAME, process.env.ZJU_PASSWORD)
@@ -118,7 +116,8 @@ const courses = new COURSES(
         .then((confirm) => {
           if (confirm.confirm) {
             // const { spawn } = require("child_process");
-            fs.writeFileSync(path.join(__dirname,"QA.html"),`
+            const outputfile = path.join(path.dirname(fileURLToPath(import.meta.url)),"QA.html");
+            fs.writeFileSync(outputfile,`
             <!DOCTYPE html>
             <html lang="zh-Hans">
             <head>
@@ -159,7 +158,7 @@ const courses = new COURSES(
             </body>
             </html>
             `)
-            console.log("[+] HTML file generated at: ",path.join(__dirname,"QA.html"));
+            console.log("[+] HTML file generated at: ",outputfile);
                     }
         });
     })
