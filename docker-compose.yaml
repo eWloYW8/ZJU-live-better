@@ -1,0 +1,9 @@
+services:
+  autosign:
+    build:
+      context: .
+      dockerfile: Dockerfile.autosign
+    image: zju-live-better-autosign
+    env_file:
+      - .env
+    restart: unless-stopped
